@@ -1,13 +1,10 @@
 #Flaskとrender_template（HTMLを表示させるための関数）をインポート
-from pickle import FALSE
 import sys
-import re
 from unittest import result
-sys.path.append("/Users/nakagawa/Documents/ForcedExcursionSystemV2/api")
+sys.path.append("/.api")
 from flask import Flask, render_template, request, jsonify
 from markupsafe import escape
 import sqlite3
-import json
 
 #Flaskオブジェクトの生成
 app = Flask(__name__)
@@ -31,7 +28,6 @@ def getEvent():
     cur = conn.cursor()
     cur.execute('SELECT * FROM Event')
     v_events = cur.fetchall()
-
     result = []
     for event in v_events:
         event_data = {}
@@ -45,45 +41,42 @@ def getEvent():
 
         event_data['summary'] = event[3]
         result.append(event_data)
-
     cur.close()
     conn.close()
     return jsonify(result)
 
 @app.route("/gateCheckter/api/events/<int:str_event_id>/runners", methods=['GET'])
 def getRunners(str_event_id):
-    event_id = int(str_event_id)
     conn = sqlite3.connect(dbname)
     cur = conn.cursor()
-   
-    cur.execute('SELECT Runner.code,Person.name,Person.yomi,Runner.grade,Runner.classNo,Runner.attendanceNo, Department.gender,Department.tense\
+    Runner=('SELECT Runner.code,Person.name,Person.yomi,Runner.grade,Runner.classNo,Runner.attendanceNo, Department.gender,Department.tense\
                     FROM Runner \
                         inner join Person on Runner.person_id = Person.pid \
-                        inner join Department on Runner.department_id = Department.id where event_id = 2')
-    v_runners =cur.fetchall()
+                        inner join Department on Runner.department_id = Department.id ')
+    cur.execute(Runner+'where event_id = ' + str(str_event_id))
     result = []
+    v_runners = cur.fetchall()
     for runner in v_runners:
         p={
             "code":runner[0],
             "name":runner[1],
             "yomi":runner[2],
-            "grade":runner[3],
-            "classNo":runner[4],
-            "attendanceNo":runner[5],
-            "gender":runner[6],
-            "tense":runner[7]
-       
+            "grade":str(runner[3]),
+            "classNo":str(runner[4]),
+            "attendanceNo":str(runner[5]),
+            "gender":str(runner[6]),
+            "tense":str(runner[7])
         }   
         result.append(p)
-
     cur.close()
     conn.close()
-    return jsonify(result)
+    return jsonify(result)  
 
 @app.route("/index/<string:name>")
 def index(name):
     return render_template("index.html", name=escape(name))
-
 #おまじない
 if __name__ == "__main__":
     app.run(debug=True)
+
+
